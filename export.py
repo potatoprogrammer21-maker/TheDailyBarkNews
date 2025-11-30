@@ -1,32 +1,22 @@
-from app import app
-from flask import url_for
+from app import app, dogs
+from flask import render_template
 import os
 
 OUTPUT_DIR = "dist"
 
-# Make sure dist/ exists
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-with app.test_request_context():
-    # List all the routes you want exported
-    routes = [
-        "/",           # homepage
-        "/about",      # example
-        "/news",       # example
-    ]
+with app.app_context():
+    # Render homepage
+    html = render_template("index.html", dogs=dogs)
 
-    for route in routes:
-        rendered = app.test_client().get(route).data.decode("utf-8")
+    # Write to dist/index.html
+    with open(os.path.join(OUTPUT_DIR, "index.html"), "w", encoding="utf-8") as f:
+        f.write(html)
 
-        # Convert route to filename
-        if route == "/":
-            filename = "index.html"
-        else:
-            filename = route.strip("/") + ".html"
+# Copy static folder
+import shutil
+if os.path.exists("static"):
+    shutil.copytree("static", os.path.join(OUTPUT_DIR, "static"), dirs_exist_ok=True)
 
-        path = os.path.join(OUTPUT_DIR, filename)
-
-        with open(path, "w") as f:
-            f.write(rendered)
-
-        print("Exported:", path)
+print("Export complete!")
